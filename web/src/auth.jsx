@@ -14,6 +14,12 @@ export function AuthProvider({ children }) {
     setSession(data ?? null)
   }, [])
 
+  // Refresca permisos/suscripción desde el servidor (p. ej. al volver de pagar).
+  const reload = useCallback(async () => {
+    const me = await api('/auth/me')
+    setSession((s) => (s ? { ...s, ...me } : s))
+  }, [])
+
   // Al abrir la app intenta recuperar la sesión con la cookie de refresh.
   useEffect(() => {
     refreshSession().then(apply).finally(() => setLoading(false))
@@ -25,12 +31,14 @@ export function AuthProvider({ children }) {
     can: (perm) => !!session?.permissions.includes(perm),
     hasModule: (m) => !!session?.modules.includes(m),
     login: async (email, password) => apply(await api('/auth/login', { method: 'POST', body: { email, password }, auth: false })),
+    signup: async (form) => apply(await api('/auth/signup', { method: 'POST', body: form, auth: false })),
+    reload,
     switchTenant: async (tenantId) => apply(await api('/auth/switch-tenant', { method: 'POST', body: { tenantId } })),
     logout: async () => {
       await api('/auth/logout', { method: 'POST', auth: false }).catch(() => {})
       apply(null)
     },
-  }), [session, loading, apply])
+  }), [session, loading, apply, reload])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
 
 export default function Login() {
@@ -33,6 +34,7 @@ export default function Login() {
         </label>
         {error && <div className="error" role="alert">{error}</div>}
         <button className="btn" disabled={busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
+        <p className="muted" style={{ textAlign: 'center' }}>¿Sin cuenta? <Link to="/registro">Prueba gratis 14 días</Link></p>
       </form>
     </div>
   )

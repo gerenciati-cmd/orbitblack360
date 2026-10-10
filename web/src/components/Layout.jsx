@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth'
 
 // Navegación: sidebar en escritorio, barra inferior en móvil. Cada módulo nuevo se registra aquí.
@@ -7,11 +7,23 @@ const NAV = [
   { to: '/ordenes', label: 'Órdenes', icon: '📋', module: 'orders', permission: 'orders.read' },
   { to: '/catalogos', label: 'Catálogos', icon: '🗂️', module: 'catalogs', permission: 'catalogs.read' },
   { to: '/usuarios', label: 'Usuarios', icon: '👥', module: 'users', permission: 'users.read' },
+  { to: '/facturacion', label: 'Plan', icon: '💳', permission: 'tenant.manage' },
+  { to: '/plataforma', label: 'Clientes', icon: '🏢', platform: true },
 ]
+
+const BANNERS = {
+  past_due: 'No pudimos cobrar tu último pago. Actualiza tu método de pago para evitar la suspensión.',
+  canceled: 'Tu suscripción está cancelada.',
+  suspended: 'Tu cuenta está suspendida. Contacta a soporte.',
+  expired: 'Tu prueba gratuita terminó. Elige un plan para continuar.',
+}
 
 export default function Layout() {
   const { session, hasModule, can, logout, switchTenant } = useAuth()
-  const items = NAV.filter((n) => hasModule(n.module) && (!n.permission || can(n.permission)))
+  const sub = session.tenant.subscription
+  const items = NAV.filter((n) => (n.platform ? session.user.isPlatformAdmin : (!n.module || hasModule(n.module)) && (!n.permission || can(n.permission)))
+    && (sub.allowed || session.user.isPlatformAdmin || n.to === '/facturacion'))
+  const daysLeft = sub.status === 'trialing' && sub.trialEndsAt ? Math.max(0, Math.ceil((new Date(sub.trialEndsAt) - Date.now()) / 864e5)) : null
 
   return (
     <div className="shell">
@@ -38,7 +50,11 @@ export default function Layout() {
           <button className="link" onClick={logout}>Cerrar sesión</button>
         </div>
       </aside>
-      <main className="content"><Outlet /></main>
+      <main className="content">
+        {BANNERS[sub.status] && <Link to="/facturacion" className="banner warn">{BANNERS[sub.status]}</Link>}
+        {daysLeft !== null && <Link to="/facturacion" className="banner">Prueba gratuita: te quedan {daysLeft} día{daysLeft === 1 ? '' : 's'}. Elige un plan.</Link>}
+        <Outlet />
+      </main>
     </div>
   )
 }

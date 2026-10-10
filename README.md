@@ -26,6 +26,15 @@ Plataforma central multi-empresa (pensada para venderse como CRM/intranet). Node
 Alta de un cliente nuevo: `POST /api/platform/tenants` (solo admin de plataforma).
 Toda tabla de negocio debe llevar `tenant_id` y filtrarse con `req.ctx.tenant.id`.
 
+## Suscripciones (venta del producto)
+- Planes en `src/plans.js` (límite de usuarios y módulos incluidos). Los precios viven en Stripe: un Price por plan.
+- Registro público en `/registro`: crea la empresa en prueba de 14 días con plan Pro. Al vencer, la API responde 402 y la app solo deja ver Facturación.
+- Estados: `trialing`, `active`, `past_due` (conserva acceso con aviso), `canceled`, `suspended`.
+- Stripe (Checkout + Portal del cliente) se configura con las variables `STRIPE_*` del `.env.example`.
+  El webhook es `POST /api/webhooks/stripe` con los eventos `checkout.session.completed` y `customer.subscription.*`; verifica la firma y es idempotente.
+- `/plataforma` (solo admin de plataforma): ver clientes, cambiar plan, suspender/reactivar, extender prueba.
+- Al agregar un módulo: decide en qué planes entra (`src/plans.js`) y protege su API con `requireModule` en `src/app.js`.
+
 ## Agregar un módulo nuevo
 1. Migración en `src/db/migrations/` (con `tenant_id`).
 2. Permisos y módulo en `src/permissions.js`.
