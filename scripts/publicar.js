@@ -34,6 +34,13 @@ if (sh('git status --porcelain')) {
   console.log(sh('git diff --cached --stat').split('\n').map((l) => `  ${l}`).join('\n'));
   sh(`git commit -m ${JSON.stringify(message)}`);
 } else {
+  // Sin cambios y con produccion ya al día: no hay nada que publicar (evita etiquetas repetidas).
+  sh('git fetch origin');
+  if (sh('git rev-parse main') === sh('git rev-parse origin/produccion')) {
+    console.log('Todo ya está publicado: produccion == main. No hay nada nuevo que subir.');
+    console.log('Si GoDaddy no lo refleja, usa en su panel: "Actualizar vista previa" -> "Publicar como activo".');
+    process.exit(0);
+  }
   console.log('No hay cambios nuevos; se publica lo que ya está en main.');
 }
 
