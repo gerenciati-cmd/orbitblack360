@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const db = require('./db');
 const cfg = require('./config');
 const { subscriptionState } = require('./plans');
+const { PERMISSIONS } = require('./permissions');
 
 const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
 
@@ -39,14 +40,19 @@ async function loadContext(userId, tenantId) {
   if (!user) return null;
   const tenant = await db('tenants').where({ id: tenantId, active: true }).first();
   const membership = tenant && (await db('memberships').where({ user_id: userId, tenant_id: tenantId }).first());
-  if (!membership) return null;
-  const role = await db('roles').where({ id: membership.role_id }).first();
-  const permissions = (await db('role_permissions').where({ role_id: role.id })).map((r) => r.permission_key);
+  // El dueño de la plataforma puede entrar a cualquier empresa como soporte, sin ser miembro.
+  const support = !!tenant && !membership && !!user.is_platform_admin;
+  if (!membership && !support) return null;
+  const role = support ? { name: 'Soporte de plataforma' } : await db('roles').where({ id: membership.role_id }).first();
+  const permissions = support
+    ? Object.keys(PERMISSIONS)
+    : (await db('role_permissions').where({ role_id: role.id })).map((r) => r.permission_key);
   const modules = (await db('tenant_modules').where({ tenant_id: tenantId, enabled: true })).map((m) => m.module_key);
   return {
     user: { id: user.id, name: user.name, email: user.email, isPlatformAdmin: !!user.is_platform_admin },
     tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug, plan: tenant.plan, subscription: subscriptionState(tenant) },
     role: role.name,
+    supportMode: support,
     permissions,
     modules,
   };

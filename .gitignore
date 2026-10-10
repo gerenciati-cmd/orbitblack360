@@ -5,3 +5,6 @@ node_modules/
 *.log
 .DS_Store
 web/dist/
+
+# Datos privados de produccion
+database/*.local.sql

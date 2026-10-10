@@ -112,7 +112,12 @@ router.get('/me', requireAuth, async (req, res) => {
 
 router.post('/switch-tenant', requireAuth, async (req, res) => {
   const tenantId = Number(req.body?.tenantId);
-  if (!(await loadContext(req.ctx.user.id, tenantId))) return res.status(403).json({ error: 'Empresa no disponible' });
+  const ctx = await loadContext(req.ctx.user.id, tenantId);
+  if (!ctx) return res.status(403).json({ error: 'Empresa no disponible' });
+  // Acceso de soporte a una empresa ajena: queda registrado en la bitácora de esa empresa.
+  if (ctx.supportMode) {
+    await db('audit_log').insert({ tenant_id: tenantId, user_id: req.ctx.user.id, module: 'platform', entity: 'tenants', record_id: String(tenantId), action: 'acceso_soporte', detail: ctx.user.email });
+  }
   return sessionResponse(res, req.ctx.user.id, tenantId);
 });
 

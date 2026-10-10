@@ -8,7 +8,7 @@ const NAV = [
   { to: '/catalogos', label: 'Catálogos', icon: '🗂️', module: 'catalogs', permission: 'catalogs.read' },
   { to: '/usuarios', label: 'Usuarios', icon: '👥', module: 'users', permission: 'users.read' },
   { to: '/facturacion', label: 'Plan', icon: '💳', permission: 'tenant.manage' },
-  { to: '/plataforma', label: 'Clientes', icon: '🏢', platform: true },
+  { to: '/plataforma', label: 'Plataforma', icon: '🏢', platform: true },
 ]
 
 const BANNERS = {
@@ -51,6 +51,12 @@ export default function Layout() {
         </div>
       </aside>
       <main className="content">
+        {session.supportMode && (
+          <div className="banner warn">
+            Modo soporte en <strong>{session.tenant.name}</strong>: tus acciones quedan registradas.{' '}
+            <button className="link" onClick={() => switchTenant(session.tenants[0].id)}>Salir</button>
+          </div>
+        )}
         {BANNERS[sub.status] && <Link to="/facturacion" className="banner warn">{BANNERS[sub.status]}</Link>}
         {daysLeft !== null && <Link to="/facturacion" className="banner">Prueba gratuita: te quedan {daysLeft} día{daysLeft === 1 ? '' : 's'}. Elige un plan.</Link>}
         <Outlet />

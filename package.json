@@ -11,7 +11,8 @@
     "build": "npm --prefix web install --include=dev && npm --prefix web run build",
     "dev:web": "npm --prefix web run dev",
     "release": "node scripts/release.js",
-    "postinstall": "npm run build || echo build-web-omitido"
+    "postinstall": "npm run build || echo build-web-omitido",
+    "publicar": "node scripts/publicar.js"
   },
   "engines": {
     "node": ">=20"

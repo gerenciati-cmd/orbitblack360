@@ -41,9 +41,20 @@ Toda tabla de negocio debe llevar `tenant_id` y filtrarse con `req.ctx.tenant.id
 3. Rutas en `src/routes/` y registro en `src/app.js`.
 4. Página en `web/src/pages/`, ruta en `web/src/App.jsx` (con `<Gate>`) y entrada en `NAV` de `Layout.jsx`.
 
+## Base de datos (automática)
+Al arrancar, la app (`src/bootstrap.js`) aplica sola las migraciones pendientes y, si la base no tiene usuarios, crea al dueño con `SEED_ADMIN_EMAIL` y `SEED_ADMIN_PASSWORD`.
+Basta con crear una base MySQL **vacía** y poner las variables `DB_*`; no hay que importar nada. Usa un candado de MySQL, así que varias instancias o un reinicio a mitad de arranque no la dejan atorada.
+Si algo falla la app no arranca a medias: escribe `[ARRANQUE FALLIDO]` con el detalle en los registros y sale con error. `AUTO_MIGRATE=false` la desactiva.
+Un cambio de estructura nuevo = un archivo en `src/db/migrations/`; se aplica en el siguiente despliegue. `database/schema.sql` solo sirve para montar una base desde cero a mano.
+
 ## Publicar
-    npm run release -- v0.1.1
-Luego, en el panel de GoDaddy, Implementar. Variables de entorno de producción (JWT_SECRET, DB_*) se configuran en el panel, no en el repo.
+    npm run publicar                     # guarda cambios, revisa que compile, sube a GitHub y actualiza produccion
+    npm run publicar -- "mi mensaje"     # con mensaje de commit propio
+    npm run publicar -- --minor          # versión menor (también --major)
+Se detiene sin publicar si el frontend no compila o si hay archivos privados (.env, *.local.sql, llaves).
+Luego, en el panel de GoDaddy: "Actualizar vista previa", revisar, y "Publicar como activo".
+Variables de entorno de producción (JWT_SECRET, DB_*) se configuran en la pestaña Secretos del panel, no en el repo.
+(`npm run release -- vX.Y.Z` sigue existiendo para publicar con una versión exacta; no hace commit ni compila.)
 
 ## Rollback
     git checkout produccion
