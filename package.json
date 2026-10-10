@@ -6,6 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "migrate": "knex migrate:latest",
+    "seed": "node scripts/seed.js",
+    "build": "npm --prefix web install && npm --prefix web run build",
+    "dev:web": "npm --prefix web run dev",
     "release": "node scripts/release.js"
   },
   "engines": {
