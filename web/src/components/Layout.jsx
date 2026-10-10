@@ -4,6 +4,8 @@ import { useAuth } from '../auth'
 // Navegación: sidebar en escritorio, barra inferior en móvil. Cada módulo nuevo se registra aquí.
 const NAV = [
   { to: '/', label: 'Inicio', icon: '🏠', module: 'dashboard', end: true },
+  { to: '/ordenes', label: 'Órdenes', icon: '📋', module: 'orders', permission: 'orders.read' },
+  { to: '/catalogos', label: 'Catálogos', icon: '🗂️', module: 'catalogs', permission: 'catalogs.read' },
   { to: '/usuarios', label: 'Usuarios', icon: '👥', module: 'users', permission: 'users.read' },
 ]
 

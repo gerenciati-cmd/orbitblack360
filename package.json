@@ -8,9 +8,10 @@
     "dev": "node --watch server.js",
     "migrate": "knex migrate:latest",
     "seed": "node scripts/seed.js",
-    "build": "npm --prefix web install && npm --prefix web run build",
+    "build": "npm --prefix web install --include=dev && npm --prefix web run build",
     "dev:web": "npm --prefix web run dev",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "postinstall": "npm run build || echo build-web-omitido"
   },
   "engines": {
     "node": ">=20"
@@ -25,6 +26,7 @@
     "jsonwebtoken": "^9.0.3",
     "knex": "^3.3.0",
     "mysql2": "^3.24.5",
+    "stripe": "^23.0.0",
     "zod": "^4.6.5"
   }
 }

@@ -4,6 +4,10 @@ import Layout from './components/Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Users from './pages/Users'
+import Catalogs from './pages/Catalogs'
+import Orders from './pages/Orders'
+import OrderNew from './pages/OrderNew'
+import OrderDetail from './pages/OrderDetail'
 
 function Protected() {
   const { session, loading } = useAuth()
@@ -26,6 +30,10 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="usuarios" element={<Gate module="users" permission="users.read"><Users /></Gate>} />
+          <Route path="catalogos/:entity?" element={<Gate module="catalogs" permission="catalogs.read"><Catalogs /></Gate>} />
+          <Route path="ordenes" element={<Gate module="orders" permission="orders.read"><Orders /></Gate>} />
+          <Route path="ordenes/nueva" element={<Gate module="orders" permission="orders.create"><OrderNew /></Gate>} />
+          <Route path="ordenes/:id" element={<Gate module="orders" permission="orders.read"><OrderDetail /></Gate>} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,5 +1,8 @@
 const router = require('express').Router();
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const { createTenant } = require('../tenants');
+const { TRIAL_DAYS, TRIAL_PLAN } = require('../plans');
 const rateLimit = require('express-rate-limit');
 const { z } = require('zod');
 const db = require('../db');
@@ -52,6 +55,37 @@ router.post('/login', loginLimiter, async (req, res) => {
 
   await db('users').where({ id: user.id }).update({ last_login_at: db.fn.now() });
   return sessionResponse(res, user.id, tenant.id);
+});
+
+const signupLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 5, standardHeaders: true, legacyHeaders: false });
+const signupSchema = z.object({
+  company: z.string().trim().min(2).max(120),
+  name: z.string().trim().min(1).max(120),
+  email: z.string().email(),
+  password: z.string().min(8).max(200),
+});
+
+const slugify = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'empresa';
+
+// Registro público: crea la empresa en prueba gratuita con su administrador y abre sesión.
+router.post('/signup', signupLimiter, async (req, res) => {
+  const parsed = signupSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Revisa los datos (contraseña mínimo 8 caracteres)' });
+  const d = parsed.data;
+  const email = d.email.toLowerCase();
+  if (await db('users').where({ email }).first()) {
+    return res.status(409).json({ error: 'Ese correo ya tiene una cuenta. Inicia sesión.' });
+  }
+
+  const slug = `${slugify(d.company)}-${crypto.randomBytes(3).toString('hex')}`;
+  const { userId, tenantId } = await db.transaction(async (trx) => {
+    const { tenantId, adminRoleId } = await createTenant(trx, { name: d.company, slug, plan: TRIAL_PLAN, trialDays: TRIAL_DAYS });
+    const [userId] = await trx('users').insert({ name: d.name, email, password_hash: await bcrypt.hash(d.password, 12) });
+    await trx('memberships').insert({ user_id: userId, tenant_id: tenantId, role_id: adminRoleId });
+    return { userId, tenantId };
+  });
+  res.status(201);
+  return sessionResponse(res, userId, tenantId);
 });
 
 router.post('/refresh', async (req, res) => {

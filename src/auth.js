@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const db = require('./db');
 const cfg = require('./config');
+const { subscriptionState } = require('./plans');
 
 const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
 
@@ -44,7 +45,7 @@ async function loadContext(userId, tenantId) {
   const modules = (await db('tenant_modules').where({ tenant_id: tenantId, enabled: true })).map((m) => m.module_key);
   return {
     user: { id: user.id, name: user.name, email: user.email, isPlatformAdmin: !!user.is_platform_admin },
-    tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug, plan: tenant.plan },
+    tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug, plan: tenant.plan, subscription: subscriptionState(tenant) },
     role: role.name,
     permissions,
     modules,

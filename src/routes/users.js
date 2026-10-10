@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { z } = require('zod');
 const db = require('../db');
 const { requirePermission } = require('../middleware/auth');
+const { userLimitReached } = require('../middleware/gates');
 
 router.get('/roles', requirePermission('roles.read'), async (req, res) => {
   res.json(await db('roles').where({ tenant_id: req.ctx.tenant.id }).select('id', 'name'));
@@ -33,6 +34,10 @@ router.post('/users', requirePermission('users.manage'), async (req, res) => {
   const tid = req.ctx.tenant.id;
 
   if (!(await db('roles').where({ id: roleId, tenant_id: tid }).first())) return res.status(400).json({ error: 'Rol inválido' });
+
+  if (await userLimitReached(db, req.ctx)) {
+    return res.status(402).json({ error: 'Llegaste al límite de usuarios de tu plan. Mejora tu plan para agregar más.', code: 'plan_limit' });
+  }
 
   // El correo es único en toda la plataforma: si ya existe, solo se le da acceso a esta empresa.
   let user = await db('users').where({ email }).first();
